@@ -11,3 +11,50 @@ generator client {
 datasource db {
   provider = "postgresql"
 }
+
+enum EventStatus {
+  DRAFT
+  PUBLISHED
+  CANCELED
+  FINISHED
+}
+
+enum TicketStatus {
+  AVAILABLE
+  RESERVED
+  SOLD
+  CANCELLED
+}
+
+model Event {
+  id          String      @id @default(uuid())
+  title       String
+  description String
+  location    String
+  bannerUrl   String?
+  status      EventStatus @default(DRAFT)
+  eventDate   DateTime
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  tickets Ticket[]
+
+  @@map("events")
+}
+
+model Ticket {
+  id            String       @id @default(uuid())
+  eventId       String
+  price         Decimal      @db.Decimal(10, 2)
+  status        TicketStatus @default(AVAILABLE)
+  reservedBy    String? // ID do usuário que reservou
+  reservedUntil DateTime? // Timestamp de expiração do lock/reserva temporária
+  version       Int          @default(0) // Usado para Optimistic Locking em concorrência
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+
+  event Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  @@index([eventId, status])
+  @@map("tickets")
+}
