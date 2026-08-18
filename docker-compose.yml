@@ -1,0 +1,42 @@
+# version: '3.8'
+
+services:
+  # Banco de dados relacional transacional
+  postgres:
+    image: postgres:15-alpine
+    container_name: event_pulse_postgres
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgrespassword
+      POSTGRES_DB: event_pulse_db
+    ports:
+      - '5433:5432'
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  # Banco em memória para Cache e Distributed Locks
+  redis:
+    image: redis:7-alpine
+    container_name: event_pulse_redis
+    restart: always
+    ports:
+      - '6380:6379'
+    volumes:
+      - redis_data:/data
+
+  # Broker de Mensageria para processamento assíncrono entre serviços
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    container_name: event_pulse_rabbitmq
+    restart: always
+    ports:
+      - '5672:5672'   # Porta AMQP (onde a API se conecta)
+      - '15672:15672' # Painel Web do RabbitMQ
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+
+volumes:
+  postgres_data:
+  redis_data:
