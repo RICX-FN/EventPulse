@@ -71,4 +71,5 @@ export class Event {
     this.props.status = "CANCELED";
     this.props.updatedAt = new Date();
   }
+  
 }

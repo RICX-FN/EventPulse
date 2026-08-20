@@ -1,7 +1,7 @@
 import dotenv from "dotenv";
 import express from "express";
 import cors from "cors";
-import { eventRoutes } from "../infrastructure/http/routes/event-routes";
+import { eventRoutes } from "../infrastructure/http/routes/event.routes";
 
 dotenv.config();
 

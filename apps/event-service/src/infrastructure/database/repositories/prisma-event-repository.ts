@@ -59,4 +59,18 @@ export class PrismaEventRepository implements EventRepository {
         }),
     );
   }
+
+  async save(event: Event): Promise<void> {
+    await this.prisma.event.update({
+      where: { id: event.id },
+      data: {
+        title: event.title,
+        description: event.description,
+        location: event.location,
+        bannerUrl: event.bannerUrl,
+        status: event.status as "DRAFT" | "PUBLISHED" | "CANCELED" | "FINISHED",
+        eventDate: event.eventDate,
+      },
+    });
+  }
 }
