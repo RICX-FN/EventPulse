@@ -9,8 +9,10 @@ import { GetEventByIdUseCase } from "../../../use-cases/get-event-by-id";
 import { GetEventByIdController } from "../controllers/get-event-by-id.controller";
 import { CancelEventUseCase } from "../../../use-cases/cancel-event";
 import { CancelEventController } from "../controllers/cancel-event.controller";
-import { PublishEventUseCase } from '../../../use-cases/publish-event';
+import { PublishEventUseCase } from "../../../use-cases/publish-event";
 import { PublishEventController } from "../controllers/publish-event.controller";
+import { UpdateEventUseCase } from "../../../use-cases/update-event";
+import { UpdateEventController } from "../controllers/update-event.controller";
 
 const eventRoutes = Router();
 
@@ -32,19 +34,29 @@ const cancelEventController = new CancelEventController(cancelEventUseCase);
 const publishEventUseCase = new PublishEventUseCase(eventRepository);
 const publishEventController = new PublishEventController(publishEventUseCase);
 
+const updateEventUseCase = new UpdateEventUseCase(eventRepository);
+const updateEventController = new UpdateEventController(updateEventUseCase);
+
 // Rotas
 eventRoutes.post("/events", (req, res) =>
   createEventController.handle(req, res),
 );
+
 eventRoutes.get("/events", (req, res) => listEventsController.handle(req, res));
 eventRoutes.get("/events/:id", (req, res) =>
   getEventByIdController.handle(req, res),
 );
+
 eventRoutes.patch("/events/:id/cancel", (req, res) =>
   cancelEventController.handle(req, res),
 );
+
 eventRoutes.patch("/events/:id/publish", (req, res) =>
   publishEventController.handle(req, res),
+);
+
+eventRoutes.put("/events/:id", (req, res) =>
+  updateEventController.handle(req, res),
 );
 
 export { eventRoutes };

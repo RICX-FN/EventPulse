@@ -12,6 +12,14 @@ export interface EventProps {
   updatedAt?: Date;
 }
 
+export interface UpdateEventProps {
+  title?: string;
+  description?: string;
+  location?: string;
+  bannerUrl?: string;
+  eventDate?: Date;
+}
+
 export class Event {
   private props: EventProps;
 
@@ -74,6 +82,24 @@ export class Event {
 
   public cancel(): void {
     this.props.status = "CANCELED";
+    this.props.updatedAt = new Date();
+  }
+
+  update(props: UpdateEventProps) {
+    if (this.props.status === "CANCELED") {
+      throw new Error("Cannot update a canceled event");
+    }
+    if (this.props.status === "FINISHED") {
+      throw new Error("Cannot update a finished event");
+    }
+
+    if (props.title !== undefined) this.props.title = props.title;
+    if (props.description !== undefined)
+      this.props.description = props.description;
+    if (props.location !== undefined) this.props.location = props.location;
+    if (props.bannerUrl !== undefined) this.props.bannerUrl = props.bannerUrl;
+    if (props.eventDate !== undefined) this.props.eventDate = props.eventDate;
+
     this.props.updatedAt = new Date();
   }
 }
