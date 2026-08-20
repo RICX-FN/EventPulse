@@ -62,14 +62,18 @@ export class Event {
   }
 
   // Métodos do Domínio para alterar estados
-  public publish(): void {
+  public publish() {
+    if (this.props.status === "CANCELED") {
+      throw new Error("Cannot publish a canceled event");
+    }
+    if (this.props.status === "FINISHED") {
+      throw new Error("Cannot publish a finished event");
+    }
     this.props.status = "PUBLISHED";
-    this.props.updatedAt = new Date();
   }
 
   public cancel(): void {
     this.props.status = "CANCELED";
     this.props.updatedAt = new Date();
   }
-  
 }

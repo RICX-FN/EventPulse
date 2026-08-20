@@ -9,6 +9,8 @@ import { GetEventByIdUseCase } from "../../../use-cases/get-event-by-id";
 import { GetEventByIdController } from "../controllers/get-event-by-id.controller";
 import { CancelEventUseCase } from "../../../use-cases/cancel-event";
 import { CancelEventController } from "../controllers/cancel-event.controller";
+import { PublishEventUseCase } from '../../../use-cases/publish-event';
+import { PublishEventController } from "../controllers/publish-event.controller";
 
 const eventRoutes = Router();
 
@@ -27,6 +29,9 @@ const getEventByIdController = new GetEventByIdController(getEventByIdUseCase);
 const cancelEventUseCase = new CancelEventUseCase(eventRepository);
 const cancelEventController = new CancelEventController(cancelEventUseCase);
 
+const publishEventUseCase = new PublishEventUseCase(eventRepository);
+const publishEventController = new PublishEventController(publishEventUseCase);
+
 // Rotas
 eventRoutes.post("/events", (req, res) =>
   createEventController.handle(req, res),
@@ -37,6 +42,9 @@ eventRoutes.get("/events/:id", (req, res) =>
 );
 eventRoutes.patch("/events/:id/cancel", (req, res) =>
   cancelEventController.handle(req, res),
+);
+eventRoutes.patch("/events/:id/publish", (req, res) =>
+  publishEventController.handle(req, res),
 );
 
 export { eventRoutes };
