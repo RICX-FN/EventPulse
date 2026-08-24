@@ -14,10 +14,14 @@ import { PublishEventUseCase } from "../../../use-cases/publish-event";
 import { PublishEventController } from "../controllers/publish-event.controller";
 import { UpdateEventUseCase } from "../../../use-cases/update-event";
 import { UpdateEventController } from "../controllers/update-event.controller";
+import { CreateTicketsUseCase } from "../../../use-cases/create-tickets";
+import { CreateTicketsController } from "../controllers/create-tickets.controller";
+import { PrismaTicketRepository } from "../../database/repositories/prisma-ticket-repository";
 
 const eventRoutes = Router();
 
 const eventRepository = new PrismaEventRepository(prisma);
+const ticketRepository = new PrismaTicketRepository(prisma);
 
 // Instâncias dos Casos de Uso e Controllers
 const createEventUseCase = new CreateEventUseCase(eventRepository);
@@ -37,6 +41,14 @@ const publishEventController = new PublishEventController(publishEventUseCase);
 
 const updateEventUseCase = new UpdateEventUseCase(eventRepository);
 const updateEventController = new UpdateEventController(updateEventUseCase);
+
+const createTicketsUseCase = new CreateTicketsUseCase(
+  ticketRepository,
+  eventRepository,
+);
+const createTicketsController = new CreateTicketsController(
+  createTicketsUseCase,
+);
 
 // ==========================================
 // Rotas Públicas (Consulta)
@@ -64,6 +76,11 @@ eventRoutes.patch("/events/:id/cancel", ensureAuthenticated, (req, res) =>
 
 eventRoutes.patch("/events/:id/publish", ensureAuthenticated, (req, res) =>
   publishEventController.handle(req, res),
+);
+
+// Criação em lote de bilhetes para o evento
+eventRoutes.post("/events/:eventId/tickets", ensureAuthenticated, (req, res) =>
+  createTicketsController.handle(req, res),
 );
 
 export { eventRoutes };

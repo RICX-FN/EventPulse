@@ -1,4 +1,4 @@
-import { EventRepository } from "../domain/repositories/event-repository";
+import { EventRepository } from "../domain/repositories/event-repository.interface";
 
 interface UpdateEventInput {
   id: string;

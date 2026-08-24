@@ -1,5 +1,5 @@
 import { Event } from "../domain/entities/event";
-import { EventRepository } from "../domain/repositories/event-repository";
+import { EventRepository } from "../domain/repositories/event-repository.interface";
 
 export class GetEventByIdUseCase {
   constructor(private eventRepository: EventRepository) {}

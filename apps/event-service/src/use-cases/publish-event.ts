@@ -1,4 +1,4 @@
-import { EventRepository } from '../domain/repositories/event-repository';
+import { EventRepository } from "../domain/repositories/event-repository.interface";
 
 export class PublishEventUseCase {
   constructor(private eventRepository: EventRepository) {}
@@ -7,7 +7,7 @@ export class PublishEventUseCase {
     const event = await this.eventRepository.findById(id);
 
     if (!event) {
-      throw new Error('Event not found');
+      throw new Error("Event not found");
     }
 
     event.publish();

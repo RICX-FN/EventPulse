@@ -1,4 +1,4 @@
-import { EventRepository } from "../domain/repositories/event-repository";
+import { EventRepository } from "../domain/repositories/event-repository.interface";
 
 export class CancelEventUseCase {
   constructor(private eventRepository: EventRepository) {}
