@@ -5,6 +5,7 @@ generator client {
 
 datasource db {
   provider = "postgresql"
+  schemas  = ["events_schema"]
 }
 
 enum EventStatus {
@@ -12,6 +13,8 @@ enum EventStatus {
   PUBLISHED
   CANCELED
   FINISHED
+
+  @@schema("events_schema")
 }
 
 enum TicketStatus {
@@ -19,6 +22,8 @@ enum TicketStatus {
   RESERVED
   SOLD
   CANCELLED
+
+  @@schema("events_schema")
 }
 
 model Event {
@@ -27,29 +32,32 @@ model Event {
   description String
   location    String
   bannerUrl   String?
+  userId      String      @map("user_id")
   status      EventStatus @default(DRAFT)
   eventDate   DateTime
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
+  createdAt   DateTime    @default(now()) @map("created_at")
+  updatedAt   DateTime    @updatedAt @map("updated_at")
 
   tickets Ticket[]
 
   @@map("events")
+  @@schema("events_schema")
 }
 
 model Ticket {
   id            String       @id @default(uuid())
-  eventId       String
+  eventId       String       @map("event_id")
   price         Decimal      @db.Decimal(10, 2)
   status        TicketStatus @default(AVAILABLE)
-  reservedBy    String? // ID do usuário que reservou
-  reservedUntil DateTime? // Timestamp de expiração do lock/reserva temporária
-  version       Int          @default(0) // Usado para Optimistic Locking em concorrência
-  createdAt     DateTime     @default(now())
-  updatedAt     DateTime     @updatedAt
+  reservedBy    String?      @map("reserved_by")
+  reservedUntil DateTime?    @map("reserved_until")
+  version       Int          @default(0)
+  createdAt     DateTime     @default(now()) @map("created_at")
+  updatedAt     DateTime     @updatedAt @map("updated_at")
 
   event Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
 
   @@index([eventId, status])
   @@map("tickets")
+  @@schema("events_schema")
 }

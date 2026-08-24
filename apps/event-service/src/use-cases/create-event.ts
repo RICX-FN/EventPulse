@@ -7,6 +7,7 @@ interface CreateEventUseCaseRequest {
   location: string;
   bannerUrl?: string;
   eventDate: Date;
+  userId: string;
 }
 
 interface CreateEventUseCaseResponse {
@@ -19,7 +20,8 @@ export class CreateEventUseCase {
   async execute(
     request: CreateEventUseCaseRequest,
   ): Promise<CreateEventUseCaseResponse> {
-    const { title, description, location, bannerUrl, eventDate } = request;
+    const { title, description, location, bannerUrl, eventDate, userId } =
+      request;
 
     // A própria entidade valida as regras de domínio no construtor
     const event = new Event({
@@ -28,6 +30,7 @@ export class CreateEventUseCase {
       location,
       bannerUrl,
       eventDate,
+      userId,
     });
 
     await this.eventRepository.create(event);

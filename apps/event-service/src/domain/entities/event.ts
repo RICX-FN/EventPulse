@@ -6,6 +6,7 @@ export interface EventProps {
   description: string;
   location: string;
   bannerUrl?: string | null;
+  userId: string;
   status?: "DRAFT" | "PUBLISHED" | "CANCELED" | "FINISHED";
   eventDate: Date;
   createdAt?: Date;
@@ -59,6 +60,9 @@ export class Event {
   get location(): string {
     return this.props.location;
   }
+  get userId(): string {
+    return this.props.userId;
+  }
   get bannerUrl(): string | null | undefined {
     return this.props.bannerUrl;
   }
@@ -67,6 +71,12 @@ export class Event {
   }
   get eventDate(): Date {
     return this.props.eventDate;
+  }
+  get createdAt(): Date {
+    return this.props.createdAt!;
+  }
+  get updatedAt(): Date {
+    return this.props.updatedAt!;
   }
 
   // Métodos do Domínio para alterar estados

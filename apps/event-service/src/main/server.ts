@@ -1,29 +1,17 @@
-import dotenv from "dotenv";
 import express from 'express';
 import cors from 'cors';
-import { createProxyMiddleware } from 'http-proxy-middleware';
+import { eventRoutes } from '..//infrastructure/http/routes/event.routes';
 
-
-dotenv.config();
 const app = express();
-const PORT = process.env.PORT || 3000;
 
 app.use(cors());
+app.use(express.json());
 
-// Healthcheck
-app.get('/health', (_req, res) => {
-  return res.status(200).json({ status: 'API Gateway running' });
-});
+// Monta todas as rotas de eventos sob o prefixo /api
+app.use('/api', eventRoutes);
 
-// Redirecionamento transparente das requisições de /api/events para o event-service (3001)
-app.use(
-  '/api/events',
-  createProxyMiddleware({
-    target: process.env.EVENT_SERVICE_URL || 'http://localhost:3001',
-    changeOrigin: true,
-  })
-);
+const PORT = process.env.PORT || 3001;
 
 app.listen(PORT, () => {
-  console.log(`API Gateway running on http://localhost:${PORT}`);
+  console.log(`Event Service running on port ${PORT}`);
 });

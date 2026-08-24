@@ -1,5 +1,5 @@
-import { Request, Response } from 'express';
-import { ListEventsUseCase } from '../../../use-cases/list-events-use-case';
+import { Request, Response } from "express";
+import { ListEventsUseCase } from "../../../use-cases/list-events-use-case";
 
 export class ListEventsController {
   constructor(private listEventsUseCase: ListEventsUseCase) {}
@@ -16,12 +16,15 @@ export class ListEventsController {
         bannerUrl: event.bannerUrl,
         status: event.status,
         eventDate: event.eventDate,
+        userId: event.userId,
+        createdAt: event.createdAt,
+        updatedAt: event.updatedAt,
       }));
 
       return res.status(200).json(response);
     } catch (error) {
       console.error(error);
-      return res.status(500).json({ error: 'Internal server error' });
+      return res.status(500).json({ error: "Internal server error" });
     }
   }
 }

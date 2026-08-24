@@ -1,4 +1,5 @@
 import { Router } from "express";
+import { ensureAuthenticated } from "../middlewares/ensure-authenticated";
 import prisma from "../../database/prisma";
 import { PrismaEventRepository } from "../../database/repositories/prisma-event-repository";
 import { CreateEventUseCase } from "../../../use-cases/create-event";
@@ -37,26 +38,32 @@ const publishEventController = new PublishEventController(publishEventUseCase);
 const updateEventUseCase = new UpdateEventUseCase(eventRepository);
 const updateEventController = new UpdateEventController(updateEventUseCase);
 
-// Rotas
-eventRoutes.post("/events", (req, res) =>
-  createEventController.handle(req, res),
-);
-
+// ==========================================
+// Rotas Públicas (Consulta)
+// ==========================================
 eventRoutes.get("/events", (req, res) => listEventsController.handle(req, res));
+
 eventRoutes.get("/events/:id", (req, res) =>
   getEventByIdController.handle(req, res),
 );
 
-eventRoutes.patch("/events/:id/cancel", (req, res) =>
+// ==========================================
+// Rotas Protegidas (Exigem Token JWT)
+// ==========================================
+eventRoutes.post("/events", ensureAuthenticated, (req, res) =>
+  createEventController.handle(req, res),
+);
+
+eventRoutes.put("/events/:id", ensureAuthenticated, (req, res) =>
+  updateEventController.handle(req, res),
+);
+
+eventRoutes.patch("/events/:id/cancel", ensureAuthenticated, (req, res) =>
   cancelEventController.handle(req, res),
 );
 
-eventRoutes.patch("/events/:id/publish", (req, res) =>
+eventRoutes.patch("/events/:id/publish", ensureAuthenticated, (req, res) =>
   publishEventController.handle(req, res),
-);
-
-eventRoutes.put("/events/:id", (req, res) =>
-  updateEventController.handle(req, res),
 );
 
 export { eventRoutes };

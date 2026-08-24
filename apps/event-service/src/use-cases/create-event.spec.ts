@@ -20,6 +20,7 @@ describe("CreateEventUseCase", () => {
       description: "The best software engineering conference",
       location: "Luanda, Angola",
       eventDate: futureDate,
+      userId: "user-1",
     });
 
     expect(event.id).toEqual(expect.any(String));
@@ -37,6 +38,7 @@ describe("CreateEventUseCase", () => {
         description: "Past event",
         location: "Luanda, Angola",
         eventDate: pastDate,
+        userId: "user-1",
       }),
     ).rejects.toThrow("Event date cannot be in the past.");
   });

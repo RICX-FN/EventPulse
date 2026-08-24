@@ -24,6 +24,9 @@ export class GetEventByIdController {
         bannerUrl: event.bannerUrl,
         status: event.status,
         eventDate: event.eventDate,
+        userId: event.userId,
+        createdAt: event.createdAt,
+        updatedAt: event.updatedAt,
       });
     } catch (error) {
       console.error(error);
