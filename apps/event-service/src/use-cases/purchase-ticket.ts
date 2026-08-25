@@ -1,4 +1,5 @@
 import { TicketRepository } from '../domain/repositories/ticket-repository.interface';
+import { EventPublisher } from '../domain/events/event-publisher.interface';
 import { TicketStatus } from '../generated/prisma/enums';
 
 interface PurchaseTicketInput {
@@ -7,7 +8,10 @@ interface PurchaseTicketInput {
 }
 
 export class PurchaseTicketUseCase {
-  constructor(private ticketRepository: TicketRepository) {}
+  constructor(
+    private ticketRepository: TicketRepository,
+    private eventPublisher: EventPublisher // Injeção de dependência do publisher
+  ) {}
 
   async execute({ ticketId, userId }: PurchaseTicketInput) {
     const ticket = await this.ticketRepository.findById(ticketId);
@@ -24,7 +28,6 @@ export class PurchaseTicketUseCase {
       throw new Error('Unauthorized: This ticket is reserved by another user.');
     }
 
-    // Verifica se a reserva expirou
     if (ticket.reservedUntil && new Date() > new Date(ticket.reservedUntil)) {
       throw new Error('Reservation has expired. Please reserve the ticket again.');
     }
@@ -38,6 +41,14 @@ export class PurchaseTicketUseCase {
     if (!success) {
       throw new Error('Conflict: Failed to purchase ticket due to concurrent updates. Please try again.');
     }
+
+    // 📢 Disparo do Evento Assíncrono para o RabbitMQ
+    await this.eventPublisher.publishTicketPurchased({
+      ticketId: ticket.id,
+      eventId: ticket.eventId,
+      userId: userId,
+      price: ticket.price,
+    });
 
     return {
       message: 'Ticket purchased successfully.',

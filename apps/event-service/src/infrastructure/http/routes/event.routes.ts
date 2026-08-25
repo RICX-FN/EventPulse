@@ -21,11 +21,15 @@ import { ReserveTicketUseCase } from "../../../use-cases/reserve-ticket";
 import { ReserveTicketController } from "../controllers/reserve-ticket.controller";
 import { PurchaseTicketUseCase } from "../../../use-cases/purchase-ticket";
 import { PurchaseTicketController } from "../controllers/purchase-ticket.controller";
+import { rabbitMQClient } from "../../messaging/rabbitmq-client";
+import { RabbitMQEventPublisher } from "../../messaging/rabbitmq-event-publisher";
 
 const eventRoutes = Router();
 
+// Repositórios e Publishers
 const eventRepository = new PrismaEventRepository(prisma);
 const ticketRepository = new PrismaTicketRepository(prisma);
+const eventPublisher = new RabbitMQEventPublisher(rabbitMQClient);
 
 // Instâncias dos Casos de Uso e Controllers
 const createEventUseCase = new CreateEventUseCase(eventRepository);
@@ -48,20 +52,24 @@ const updateEventController = new UpdateEventController(updateEventUseCase);
 
 const createTicketsUseCase = new CreateTicketsUseCase(
   ticketRepository,
-  eventRepository,
+  eventRepository
 );
 const createTicketsController = new CreateTicketsController(
-  createTicketsUseCase,
+  createTicketsUseCase
 );
 
 const reserveTicketUseCase = new ReserveTicketUseCase(ticketRepository);
 const reserveTicketController = new ReserveTicketController(
-  reserveTicketUseCase,
+  reserveTicketUseCase
 );
 
-const purchaseTicketUseCase = new PurchaseTicketUseCase(ticketRepository);
+// Injeta o ticketRepository e o eventPublisher no Use Case de compra
+const purchaseTicketUseCase = new PurchaseTicketUseCase(
+  ticketRepository,
+  eventPublisher
+);
 const purchaseTicketController = new PurchaseTicketController(
-  purchaseTicketUseCase,
+  purchaseTicketUseCase
 );
 
 // ==========================================
@@ -70,43 +78,43 @@ const purchaseTicketController = new PurchaseTicketController(
 eventRoutes.get("/events", (req, res) => listEventsController.handle(req, res));
 
 eventRoutes.get("/events/:id", (req, res) =>
-  getEventByIdController.handle(req, res),
+  getEventByIdController.handle(req, res)
 );
 
 // ==========================================
 // Rotas Protegidas (Exigem Token JWT)
 // ==========================================
 eventRoutes.post("/events", ensureAuthenticated, (req, res) =>
-  createEventController.handle(req, res),
+  createEventController.handle(req, res)
 );
 
 eventRoutes.put("/events/:id", ensureAuthenticated, (req, res) =>
-  updateEventController.handle(req, res),
+  updateEventController.handle(req, res)
 );
 
 eventRoutes.patch("/events/:id/cancel", ensureAuthenticated, (req, res) =>
-  cancelEventController.handle(req, res),
+  cancelEventController.handle(req, res)
 );
 
 eventRoutes.patch("/events/:id/publish", ensureAuthenticated, (req, res) =>
-  publishEventController.handle(req, res),
+  publishEventController.handle(req, res)
 );
 
 // Criação em lote de bilhetes para o evento
 eventRoutes.post("/events/:eventId/tickets", ensureAuthenticated, (req, res) =>
-  createTicketsController.handle(req, res),
+  createTicketsController.handle(req, res)
 );
 
 // Rota para reservar um bilhete do evento
 eventRoutes.post("/events/:eventId/reserve", ensureAuthenticated, (req, res) =>
-  reserveTicketController.handle(req, res),
+  reserveTicketController.handle(req, res)
 );
 
 // Rota de compra de bilhete
 eventRoutes.post(
   "/events/tickets/:ticketId/purchase",
   ensureAuthenticated,
-  (req, res) => purchaseTicketController.handle(req, res),
+  (req, res) => purchaseTicketController.handle(req, res)
 );
 
 export { eventRoutes };

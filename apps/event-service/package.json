@@ -4,5 +4,11 @@
   "private": true,
   "scripts": {
     "dev": "tsx watch src/main/server.ts"
+  },
+  "dependencies": {
+    "amqplib": "^2.0.1"
+  },
+  "devDependencies": {
+    "@types/amqplib": "^0.10.8"
   }
 }
