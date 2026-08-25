@@ -17,6 +17,9 @@ import { UpdateEventController } from "../controllers/update-event.controller";
 import { CreateTicketsUseCase } from "../../../use-cases/create-tickets";
 import { CreateTicketsController } from "../controllers/create-tickets.controller";
 import { PrismaTicketRepository } from "../../database/repositories/prisma-ticket-repository";
+import { ReserveTicketUseCase } from "../../../use-cases/reserve-ticket";
+import { ReserveTicketController } from "../controllers/reserve-ticket.controller";
+
 
 const eventRoutes = Router();
 
@@ -50,6 +53,9 @@ const createTicketsController = new CreateTicketsController(
   createTicketsUseCase,
 );
 
+const reserveTicketUseCase = new ReserveTicketUseCase(ticketRepository);
+const reserveTicketController = new ReserveTicketController(reserveTicketUseCase);
+
 // ==========================================
 // Rotas Públicas (Consulta)
 // ==========================================
@@ -81,6 +87,13 @@ eventRoutes.patch("/events/:id/publish", ensureAuthenticated, (req, res) =>
 // Criação em lote de bilhetes para o evento
 eventRoutes.post("/events/:eventId/tickets", ensureAuthenticated, (req, res) =>
   createTicketsController.handle(req, res),
+);
+
+// Rota para reservar um bilhete do evento
+eventRoutes.post(
+  "/events/:eventId/reserve",
+  ensureAuthenticated,
+  (req, res) => reserveTicketController.handle(req, res)
 );
 
 export { eventRoutes };

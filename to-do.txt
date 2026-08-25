@@ -1,2 +1,2 @@
-Corrigir problema de prisma na rota de registar [pendente]
 Aplicar testes unitarios para o User Service [pendente]
+Criar o Worker/Job [pendente]
