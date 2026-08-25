@@ -30,3 +30,21 @@ export interface TicketRepository {
   }): Promise<boolean>;
   releaseExpiredReservations(): Promise<number>; // Retorna a quantidade de bilhetes libertados
 }
+
+export interface TicketRepository {
+  createMany(data: CreateTicketsDTO): Promise<{ count: number }>;
+  findAvailableTicket(eventId: string): Promise<any | null>;
+  findById(ticketId: string): Promise<any | null>; // Novo
+  reserveWithOptimisticLock(params: {
+    ticketId: string;
+    version: number;
+    userId: string;
+    reservedUntil: Date;
+  }): Promise<boolean>;
+  releaseExpiredReservations(): Promise<number>;
+  markAsSold(params: {
+    ticketId: string;
+    version: number;
+    userId: string;
+  }): Promise<boolean>; // Novo
+}

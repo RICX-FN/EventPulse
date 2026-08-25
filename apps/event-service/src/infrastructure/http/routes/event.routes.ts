@@ -19,7 +19,8 @@ import { CreateTicketsController } from "../controllers/create-tickets.controlle
 import { PrismaTicketRepository } from "../../database/repositories/prisma-ticket-repository";
 import { ReserveTicketUseCase } from "../../../use-cases/reserve-ticket";
 import { ReserveTicketController } from "../controllers/reserve-ticket.controller";
-
+import { PurchaseTicketUseCase } from "../../../use-cases/purchase-ticket";
+import { PurchaseTicketController } from "../controllers/purchase-ticket.controller";
 
 const eventRoutes = Router();
 
@@ -54,7 +55,14 @@ const createTicketsController = new CreateTicketsController(
 );
 
 const reserveTicketUseCase = new ReserveTicketUseCase(ticketRepository);
-const reserveTicketController = new ReserveTicketController(reserveTicketUseCase);
+const reserveTicketController = new ReserveTicketController(
+  reserveTicketUseCase,
+);
+
+const purchaseTicketUseCase = new PurchaseTicketUseCase(ticketRepository);
+const purchaseTicketController = new PurchaseTicketController(
+  purchaseTicketUseCase,
+);
 
 // ==========================================
 // Rotas Públicas (Consulta)
@@ -90,10 +98,15 @@ eventRoutes.post("/events/:eventId/tickets", ensureAuthenticated, (req, res) =>
 );
 
 // Rota para reservar um bilhete do evento
+eventRoutes.post("/events/:eventId/reserve", ensureAuthenticated, (req, res) =>
+  reserveTicketController.handle(req, res),
+);
+
+// Rota de compra de bilhete
 eventRoutes.post(
-  "/events/:eventId/reserve",
+  "/events/tickets/:ticketId/purchase",
   ensureAuthenticated,
-  (req, res) => reserveTicketController.handle(req, res)
+  (req, res) => purchaseTicketController.handle(req, res),
 );
 
 export { eventRoutes };

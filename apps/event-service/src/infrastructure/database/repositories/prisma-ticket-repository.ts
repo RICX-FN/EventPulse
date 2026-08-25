@@ -1,7 +1,9 @@
-import { TicketStatus } from '../../../generated/prisma/enums';
-import { PrismaClient } from '../../../generated/prisma/client';
-import { TicketRepository, CreateTicketsDTO } from '../../../domain/repositories/ticket-repository.interface';
-
+import { TicketStatus } from "../../../generated/prisma/enums";
+import { PrismaClient } from "../../../generated/prisma/client";
+import {
+  TicketRepository,
+  CreateTicketsDTO,
+} from "../../../domain/repositories/ticket-repository.interface";
 
 export class PrismaTicketRepository implements TicketRepository {
   constructor(private prisma: PrismaClient) {}
@@ -26,7 +28,12 @@ export class PrismaTicketRepository implements TicketRepository {
     });
   }
 
-  async reserveWithOptimisticLock({ ticketId, version, userId, reservedUntil }: {
+  async reserveWithOptimisticLock({
+    ticketId,
+    version,
+    userId,
+    reservedUntil,
+  }: {
     ticketId: string;
     version: number;
     userId: string;
@@ -52,21 +59,53 @@ export class PrismaTicketRepository implements TicketRepository {
   }
 
   async releaseExpiredReservations(): Promise<number> {
-  const result = await this.prisma.ticket.updateMany({
-    where: {
-      status: TicketStatus.RESERVED,
-      reservedUntil: {
-        lt: new Date(), // Menor que o timestamp atual (já expirou)
+    const result = await this.prisma.ticket.updateMany({
+      where: {
+        status: TicketStatus.RESERVED,
+        reservedUntil: {
+          lt: new Date(), // Menor que o timestamp atual (já expirou)
+        },
       },
-    },
-    data: {
-      status: TicketStatus.AVAILABLE,
-      reservedBy: null,
-      reservedUntil: null,
-      version: { increment: 1 }, // Incrementa a versão por segurança
-    },
-  });
+      data: {
+        status: TicketStatus.AVAILABLE,
+        reservedBy: null,
+        reservedUntil: null,
+        version: { increment: 1 }, // Incrementa a versão por segurança
+      },
+    });
 
-  return result.count;
-}
+    return result.count;
+  }
+
+  async findById(ticketId: string) {
+    return await this.prisma.ticket.findUnique({
+      where: { id: ticketId },
+    });
+  }
+
+  async markAsSold({
+    ticketId,
+    version,
+    userId,
+  }: {
+    ticketId: string;
+    version: number;
+    userId: string;
+  }): Promise<boolean> {
+    const result = await this.prisma.ticket.updateMany({
+      where: {
+        id: ticketId,
+        version: version, // Optimistic Locking
+        status: TicketStatus.RESERVED,
+        reservedBy: userId, // Garante que só quem reservou pode comprar
+      },
+      data: {
+        status: TicketStatus.SOLD,
+        reservedUntil: null, // Limpa o tempo limite de reserva
+        version: { increment: 1 },
+      },
+    });
+
+    return result.count > 0;
+  }
 }
