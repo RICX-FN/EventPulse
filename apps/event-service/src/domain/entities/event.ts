@@ -79,6 +79,10 @@ export class Event {
     return this.props.updatedAt!;
   }
 
+  toJSON(): EventProps {
+    return { ...this.props };
+  }
+
   // Métodos do Domínio para alterar estados
   public publish() {
     if (this.props.status === "CANCELED") {

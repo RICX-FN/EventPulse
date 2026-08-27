@@ -6,4 +6,3 @@ export interface EventRepository {
   findAll(): Promise<Event[]>;
   save(event: Event): Promise<void>;
 }
-
