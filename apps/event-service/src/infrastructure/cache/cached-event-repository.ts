@@ -27,7 +27,7 @@ export class CachedEventRepository implements EventRepository {
     }
 
     // 2. Cache Miss ou Erro no Redis: Busca no PostgreSQL
-    console.log("🐢 [Redis Cache MISS] Fetching events from PostgreSQL");
+    console.log("[Redis Cache MISS] Fetching events from PostgreSQL");
     const events = await this.prismaRepository.findAll();
 
     try {
