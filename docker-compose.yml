@@ -1,42 +1,101 @@
-# version: '3.8'
-
 services:
-  # Banco de dados relacional transacional
+  # ---------------------------------------------------------------------------
+  # INFRAESTRUTURA (Bancos & Mensageria)
+  # ---------------------------------------------------------------------------
   postgres:
     image: postgres:15-alpine
     container_name: event_pulse_postgres
-    restart: always
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgrespassword
-      POSTGRES_DB: event_pulse_db
-    ports:
-      - '5433:5432'
+      POSTGRES_USER: ${POSTGRES_USER:-user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-password}
+      POSTGRES_DB: ${POSTGRES_DB:-eventpulse_db}
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-user}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
-  # Banco em memória para Cache e Distributed Locks
   redis:
     image: redis:7-alpine
     container_name: event_pulse_redis
-    restart: always
     ports:
-      - '6380:6379'
-    volumes:
-      - redis_data:/data
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
-  # Broker de Mensageria para processamento assíncrono entre serviços
   rabbitmq:
     image: rabbitmq:3-management-alpine
     container_name: event_pulse_rabbitmq
-    restart: always
     ports:
-      - '5672:5672'   # Porta AMQP (onde a API se conecta)
-      - '15672:15672' # Painel Web do RabbitMQ
+      - "5673:5672"
+      - "15673:15672"
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # ---------------------------------------------------------------------------
+  # MICROSERVIÇOS
+  # ---------------------------------------------------------------------------
+  api-gateway:
+    image: eventpulse/api-gateway:local
+    container_name: event_pulse_gateway
+    ports:
+      - "3000:3000"
     environment:
-      RABBITMQ_DEFAULT_USER: guest
-      RABBITMQ_DEFAULT_PASS: guest
+      - PORT=3000
+      - EVENT_SERVICE_URL=http://event-service:3001
+      - USER_SERVICE_URL=http://user-service:3002
+    depends_on:
+      - event-service
+      - user-service
+
+  user-service:
+    image: eventpulse/user-service:local
+    container_name: event_pulse_user_service
+    ports:
+      - "3002:3002"
+    environment:
+      - PORT=3002
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-user}:${POSTGRES_PASSWORD:-password}@postgres:5432/${POSTGRES_DB:-eventpulse_db}?schema=public
+    depends_on:
+      postgres:
+        condition: service_healthy
+    command: sh -c "cd apps/user-service && npx prisma migrate deploy --config prisma.config.ts && cd /app && node apps/user-service/dist/src/domain/main/server.js"
+
+  event-service:
+    image: eventpulse/event-service:local
+    container_name: event_pulse_event_service
+    ports:
+      - "3001:3001"
+    environment:
+      - PORT=3001
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-user}:${POSTGRES_PASSWORD:-password}@postgres:5432/${POSTGRES_DB:-eventpulse_db}?schema=public
+      - REDIS_URL=redis://redis:6379
+      - RABBITMQ_URL=amqp://rabbitmq:5672
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    command: sh -c "cd apps/event-service && npx prisma migrate deploy --config prisma.config.ts && cd /app && node apps/event-service/dist/main/server.js"
+
+  notification-service:
+    image: eventpulse/notification-service:local
+    container_name: event_pulse_notification_service
+    environment:
+      - RABBITMQ_URL=amqp://rabbitmq:5672
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
 
 volumes:
   postgres_data:
-  redis_data:

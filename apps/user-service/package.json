@@ -3,6 +3,8 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "dev": "tsx watch src/domain/main/server.ts"
+    "dev": "tsx watch src/domain/main/server.ts",
+    "generate": "prisma generate --config prisma.config.ts",
+    "build": "tsc"
   }
 }

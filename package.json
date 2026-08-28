@@ -6,6 +6,8 @@
     "apps/*"
   ],
   "scripts": {
+    "generate": "npm run generate --workspace=apps/event-service && npm run generate --workspace=apps/user-service",
+    "build": "npm run generate && npm run build --workspace=apps/api-gateway && npm run build --workspace=apps/event-service && npm run build --workspace=apps/user-service && npm run build --workspace=apps/notification-service",
     "dev:gateway": "npm run dev --workspace=apps/api-gateway",
     "dev:events": "npm run dev --workspace=apps/event-service",
     "dev:users": "npm run dev --workspace=apps/user-service"
@@ -21,7 +23,8 @@
     "http-proxy-middleware": "^3.0.3",
     "jsonwebtoken": "^9.0.2",
     "node-cron": "^4.6.0",
-    "pg": "^8.23.0"
+    "pg": "^8.23.0",
+    "prisma": "^7.9.1"
   },
   "devDependencies": {
     "@types/amqplib": "^0.10.8",
@@ -31,7 +34,6 @@
     "@types/jsonwebtoken": "^9.0.9",
     "@types/node": "^26.4.0",
     "@types/node-cron": "^3.0.11",
-    "prisma": "^7.9.1",
     "tsx": "^4.23.12",
     "typescript": "^7.0.2",
     "vitest": "^4.1.11"

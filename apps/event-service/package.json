@@ -3,7 +3,9 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "dev": "tsx watch src/main/server.ts"
+    "dev": "tsx watch src/main/server.ts",
+    "generate": "prisma generate --config prisma.config.ts",
+    "build": "tsc"
   },
   "dependencies": {
     "amqplib": "^2.0.1",
