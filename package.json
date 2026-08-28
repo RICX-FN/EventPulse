@@ -8,6 +8,7 @@
   "scripts": {
     "generate": "npm run generate --workspace=apps/event-service && npm run generate --workspace=apps/user-service",
     "build": "npm run generate && npm run build --workspace=apps/api-gateway && npm run build --workspace=apps/event-service && npm run build --workspace=apps/user-service && npm run build --workspace=apps/notification-service",
+    "test": "vitest run apps/event-service/src/use-cases",
     "dev:gateway": "npm run dev --workspace=apps/api-gateway",
     "dev:events": "npm run dev --workspace=apps/event-service",
     "dev:users": "npm run dev --workspace=apps/user-service"

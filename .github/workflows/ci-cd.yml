@@ -1,0 +1,123 @@
+name: CI/CD Pipeline - EventPulse
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+permissions:
+  contents: read
+
+jobs:
+  # ==========================================
+  # JOB 1: Testes e Build do TypeScript (CI)
+  # ==========================================
+  test-and-build:
+    name: Build & Test Microservices
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:15-alpine
+        env:
+          POSTGRES_USER: user
+          POSTGRES_PASSWORD: password
+          POSTGRES_DB: eventpulse_db
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U user -d eventpulse_db"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    steps:
+      - name: Checkout do Código
+        uses: actions/checkout@v4
+
+      - name: Configurar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: "npm"
+
+      - name: Instalar Dependências do Monorepo
+        run: npm ci
+
+      - name: Gerar Clientes Prisma
+        run: |
+          npm run generate
+
+      - name: Aplicar Migrations Prisma
+        env:
+          DATABASE_URL: postgresql://user:password@localhost:5432/eventpulse_db?schema=public
+        run: |
+          npx prisma migrate deploy --config apps/user-service/prisma.config.ts
+          npx prisma migrate deploy --config apps/event-service/prisma.config.ts
+
+      - name: Compilar TypeScript (npm run build)
+        run: npm run build
+
+      - name: Executar testes
+        run: npm test
+
+      - name: Publicar builds TypeScript
+        uses: actions/upload-artifact@v4
+        with:
+          name: eventpulse-dist
+          path: apps/*/dist
+          if-no-files-found: error
+
+  # ==========================================
+  # JOB 2: Validação dos Dockerfiles (CI)
+  # ==========================================
+  docker-check:
+    name: Validate Docker Builds
+    needs: test-and-build
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        service:
+          [api-gateway, user-service, event-service, notification-service]
+
+    steps:
+      - name: Checkout do Código
+        uses: actions/checkout@v4
+
+      - name: Configurar Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Descarregar builds TypeScript
+        uses: actions/download-artifact@v4
+        with:
+          name: eventpulse-dist
+          path: apps
+
+      - name: Testar Build da Imagem Docker (${{ matrix.service }})
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: apps/${{ matrix.service }}/Dockerfile
+          push: false
+          tags: eventpulse/${{ matrix.service }}:test
+
+  # ==========================================
+  # JOB 3: Deploy no Render (CD)
+  # ==========================================
+  deploy-render:
+    name: Trigger Render Deploy
+    needs: [test-and-build, docker-check]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Trigger Deploy via Render Webhook (API Gateway)
+        run: curl --fail-with-body --silent --show-error -X POST "${{ secrets.RENDER_DEPLOY_HOOK_GATEWAY }}"
+
+      - name: Trigger Deploy via Render Webhook (User Service)
+        run: curl --fail-with-body --silent --show-error -X POST "${{ secrets.RENDER_DEPLOY_HOOK_USER }}"
+
+      - name: Trigger Deploy via Render Webhook (Event Service)
+        run: curl --fail-with-body --silent --show-error -X POST "${{ secrets.RENDER_DEPLOY_HOOK_EVENT }}"
+
+      - name: Trigger Deploy via Render Webhook (Notification Service)
+        run: curl --fail-with-body --silent --show-error -X POST "${{ secrets.RENDER_DEPLOY_HOOK_NOTIFICATION }}"
