@@ -1,9 +1,15 @@
 import amqp, { Channel } from "amqplib";
 
 export class RabbitMQConsumer {
+  private connection: amqp.ChannelModel | null = null;
   private channel: Channel | null = null;
+  private reconnectTimer: NodeJS.Timeout | null = null;
+  private isConnecting = false;
 
   async connect(): Promise<void> {
+    if (this.connection || this.isConnecting) return;
+
+    this.isConnecting = true;
     const rabbitUrl = process.env.RABBITMQ_URL || "amqp://localhost:5672";
 
     const exchangeName = "eventpulse_events";
@@ -15,46 +21,70 @@ export class RabbitMQConsumer {
 
     try {
       const connection = await amqp.connect(rabbitUrl);
-      this.channel = await connection.createChannel();
+      this.connection = connection;
+      connection.on("error", (error) => {
+        console.error("❌ RabbitMQ connection error:", error.message);
+      });
+      connection.on("close", () => {
+        this.connection = null;
+        this.channel = null;
+        this.scheduleReconnect();
+      });
+
+      const channel = await connection.createChannel();
+      this.channel = channel;
 
       // 1. DLX e DLQ
-      await this.channel.assertExchange(dlxName, "direct", { durable: true });
-      await this.channel.assertQueue(dlqName, { durable: true });
-      await this.channel.bindQueue(dlqName, dlxName, routingKey);
+      await channel.assertExchange(dlxName, "direct", { durable: true });
+      await channel.assertQueue(dlqName, { durable: true });
+      await channel.bindQueue(dlqName, dlxName, routingKey);
 
       // 2. Exchange Principal (tipo 'topic')
-      await this.channel.assertExchange(exchangeName, "topic", {
+      await channel.assertExchange(exchangeName, "topic", {
         durable: true,
       });
 
       // 3. Fila Principal vinculada à DLX
-      await this.channel.assertQueue(queueName, {
+      await channel.assertQueue(queueName, {
         durable: true,
         arguments: {
           "x-dead-letter-exchange": dlxName,
           "x-dead-letter-routing-key": routingKey,
         },
       });
-      await this.channel.bindQueue(queueName, exchangeName, routingKey);
+      await channel.bindQueue(queueName, exchangeName, routingKey);
 
       console.log(`📡 [Notification Service] Listening to '${queueName}'...`);
 
-      this.channel.consume(queueName, async (msg) => {
+      await channel.consume(queueName, async (msg) => {
         if (msg) {
           try {
             const payload = JSON.parse(msg.content.toString());
             await this.processEmailNotification(payload);
-            this.channel?.ack(msg); // Confirma e remove da fila
+            channel.ack(msg); // Confirma e remove da fila
           } catch (error: any) {
             console.error(`❌ [Consumer Error]: ${error.message}`);
-            this.channel?.nack(msg, false, false); // Manda para a DLQ
+            channel.nack(msg, false, false); // Manda para a DLQ
           }
         }
       });
     } catch (error) {
+      this.connection = null;
+      this.channel = null;
       console.error("❌ Connection error:", error);
-      setTimeout(() => this.connect(), 5000);
+      this.scheduleReconnect();
+    } finally {
+      this.isConnecting = false;
     }
+  }
+
+  private scheduleReconnect(): void {
+    if (this.reconnectTimer) return;
+
+    this.reconnectTimer = setTimeout(() => {
+      this.reconnectTimer = null;
+      void this.connect();
+    }, 5000);
   }
 
   private async processEmailNotification(data: any): Promise<void> {
