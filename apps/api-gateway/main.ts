@@ -15,6 +15,9 @@ app.use(
   createProxyMiddleware({
     target: process.env.EVENT_SERVICE_URL || "http://localhost:3001",
     changeOrigin: true,
+    pathRewrite: {
+      "^/api/events": "/api/events",
+    },
   }),
 );
 
@@ -24,6 +27,9 @@ app.use(
   createProxyMiddleware({
     target: process.env.USER_SERVICE_URL || "http://localhost:3002",
     changeOrigin: true,
+    pathRewrite: {
+      "^/api/users": "/api/users",
+    },
   }),
 );
 
