@@ -18,6 +18,9 @@ O **EventPulse** é uma aplicação web full-stack desenvolvida para facilitar a
 * **Clean Architecture** & **Princípios SOLID**
 * **Prisma ORM** (Modelagem e Persistência de Dados)
 * **PostgreSQL** (Banco de dados relacional)
+* **Docker Compose** (Container)
+* **Redis** (Cache)
+* **RabbitMQ**
 
 ---
 
