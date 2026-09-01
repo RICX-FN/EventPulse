@@ -89,10 +89,12 @@ model Ticket {
   status       String     @default("AVAILABLE") // AVAILABLE, RESERVED, SOLD
   createdAt    DateTime   @default(now())
 }
-
+```
+## **1. Clonar o Repositório** ##
 git clone [https://github.com/seu-usuario/eventpulse.git](https://github.com/seu-usuario/eventpulse.git)
 cd eventpulse
 
+## ** 2. Passos para o Backend ** ##
 cd backend
 npm install
 cp .env.example .env
@@ -100,6 +102,7 @@ cp .env.example .env
 npx prisma migrate dev
 npm run dev
 
+## ** 3. Passos para o Frontend ** ##
 cd ../frontend
 npm install
 cp .env.example .env
